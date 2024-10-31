@@ -1,0 +1,214 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+ЗВІТ
+з практичної роботи № 2 
+з дисципліни
+"Програмування під Android"
+на тему "Розмітка екрана. Файли розмітки Layout. 
+Життєвий цикл та методи Activity" 
+
+
+
+
+
+
+
+Виконав ст. гр ПЗПІ-23-8
+Худієнко Микита Віталійович
+
+
+Перевірив 
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+
+Харків 2024
+Завдання
+1 Розмітка екрана
+1.1 Підготовка робочого середовища
+1.2 Редагування XML-файлу розмітки
+1.3 Практика з Linear/Constraint-Layout
+1.4 Атрибути елементів
+1.5 Обробка подій
+2 Файли розмітки Layout
+2.1 Ознайомлення з проєктом Android
+2.2 Основи роботи з XML-розміткою
+2.3 Створення різних Layout
+2.4 Практика з FrameLayout та GridLayout
+2.5 Практика роботи з атрибутами
+3 Життєвий цикл та методи Activity
+3.1 Ознайомлення з життєвим циклом Activity
+3.2 Дослідження методів життєвого циклу
+3.3 Вивчення поведінки Activity при зміні орієнтації екрана
+3.4 Практичне завдання з ручного збереження стану
+3.5 Дослідження переходу між Activity
+3.6 Обробка завершення Activity 
+
+Хід роботи
+1 Розмітка екрана
+Відкриємо Android Studio та створимо новий проєкт, вибравши шаблон Empty Views Activity.
+Відкриємо файл res/layout/activity_main.xml. Створимо простий інтерфейс з використанням елементів, таких як TextView, Button, та ImageView.
+Налаштуємо розташування елементів, використовуючи LinearLayout.
+Створюємо розмітку LinearLayout, що містить кілька кнопок, розташованих одна під одною. Використайте властивості orientation для вертикальної орієнтації. Задаємо для кожної кнопки властивості layout_width та layout_height.
+Створюємо макет, використовуючи ConstraintLayout.
+Розмістити елементи на екрані, використовуючи обмеження для позиціонування (constraints), щоб задати їх взаємне розташування.
+Використаємо такі атрибути, як padding, margin, gravity та layout_gravity для налаштування відступів та вирівнювання елементів.
+Налаштуємо текстові поля TextView з різними стилями (розмір шрифту, колір, жирність).
+Додамо до кнопки обробник події натискання у файлі MainActivity.java. У файлі activity_main.xml додамо атрибут android:onClick="onButtonClick" до кнопки, а в класі MainActivity створемо відповідний метод onButtonClick.
+
+1	public void onButtonClick(View view) {
+2   		Toast.makeText(this, "Button Clicked!", 
+3	Toast.LENGTH_SHORT).show();
+4	}
+
+Створемо розмітку з використанням GridLayout, розмістіть у ній текстові поля, кнопки та зображення. Додайте кілька кнопок і запрограмуйте їх на виконання різних дій, таких як зміна тексту у текстовому полі або виведення повідомлень на екран.
+2 Файли розмітки Layout
+LinearLayout: Створемо макет, що містить кнопки, розташовані одна під одною. Експериментуйте з атрибутами gravity і layout_gravity для вирівнювання елементів.
+RelativeLayout: Розмістіть кілька елементів відносно один одного, використовуючи атрибути, такі як layout_below, layout_toRightOf.
+ConstraintLayout: Спробуйте створити складну розмітку з використанням обмежень (constraints). Для цього розташуйте елементи відносно контейнера та один одного.
+FrameLayout: Додамо кілька елементів, щоб побачити, як вони накладаються один на одного.
+GridLayout: Розмістіть текстові поля та кнопки у вигляді таблиці.
+3 Життєвий цикл та методи Activity
+Створемо новий проєкт в Android Studio із шаблоном Empty Views Activity. Відкриємо основний клас MainActivity.java. Додамо до кожного методу життєвого циклу (onCreate, onStart, onResume тощо) функцію виведення повідомлень у лог (Log.d) для відстеження послідовності викликів. Додамо логування у методи onCreate(), onStart(), onResume(), onPause(), onStop(), onDestroy(), щоб відслідковувати їх виклики.
+Змінемо орієнтацію пристрою (з портретної на ландшафтну) та спостерігайте за викликами методів життєвого циклу у логах (див. рис. 1).
+
+Рисунок 1 - Відстеження методів життєвого циклу Activity
+
+Додамо в Activity поле для введення тексту (наприклад, EditText). При зміні орієнтації екрана текст у полі буде очищено, оскільки Activity перезавантажується. Використаємо методи onSaveInstanceState() та onRestoreInstanceState() для збереження та відновлення стану при зміні орієнтації екрана (див. Додаток Б).
+Створемо друге Activity у нашому застосунку. Додамо кнопку для переходу до другого Activity. Відстежемо виклики методів життєвого циклу при переході між Activity (див. рис. 2).
+
+
+Рисунок 2 - Відстеження методів життєвого циклу Activity при переході на іншу Activity 
+
+Додамо кнопку для завершення Activity (виклик методу finish()). 
+
+1 Button finishBtn = findViewById(R.id.btn_finish);
+2 finishBtn.setOnClickListener(new View.OnClickListener() {
+3    @Override
+4    public void onClick(View v) {
+5        finish();
+6    }
+7 });
+
+ ВИСНОВКИ
+
+
+    У результаті виконання практичної роботи №2 було створено Android застосунок з різними layout: LinearLayout, RelativeLayout, ConstraintLayout, FrameLayout, GridLayout. На кожній розмітці екрану було реалізовано елементи: Button, TextView, EditView, Image. Було реалізовано обробник подій натискання на кнопку, що змінював текстове поле на елементі TextView та виводить повідомлення про натискання на кнопку.
+     Також було створено проєкт, в якому додано до кожного методу життєвого циклу (onCreate, onStart, onResume тощо) функцію виведення повідомлень у лог (Log.d) для відстеження послідовності викликів. Використано методи onSaveInstanceState() та onRestoreInstanceState() для збереження та відновлення стану при зміні орієнтації екрана. Створено друге Activity у нашому застосунку. Додамо кнопку для переходу до другого Activity.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ВИКОРИСТАНІ ДЖЕРЕЛА
+
+
+1 Методичні вказівки до практичних занять: ПЗ Розмітка екрана. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599542 (дата звернення: 10.10.2024)
+2 Методичні вказівки до практичних занять: ПЗ Файли розмітки екрану. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599543 (дата звернення: 10.10.2024)
+3 Методичні вказівки до практичних занять: ПЗ Життєвий цикл та методи Activity. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599544 (дата звернення: 10.10.2024)
+4 Обробка подій (на прикладі обробки натискання кнопок). DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599276 (дата звернення: 10.10.2024)
+5 Життєвий цикл та методи Activity. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=583041 (дата звернення: 10.10.2024)
+5 Посилання на відеозвіт у YouTube. URL: https://youtu.be/ImJZBLPAC4I
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК А
+
+
+Програмний код опубліковано на GitHub. URL: https://github.com/NureKhudiienkoMykyta/android-pzpi-23-8-khudiienko-mykyta
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК Б
+
+
+1 @Override
+2 public void onSaveInstanceState(@NonNull Bundle outState) {
+3    super.onSaveInstanceState(outState);
+4    EditText editText = findViewById(R.id.editText);
+5    outState.putString("KEY", editText.getText().toString());
+6    Log.d(TAG, "Збереження");
+7 }
+
+8 @Override
+9 protected void onRestoreInstanceState(@NonNull Bundle 
+10 	savedInstanceState) {
+11   super.onRestoreInstanceState(savedInstanceState);
+12   EditText editText = findViewById(R.id.editText);
+13   String savedText = savedInstanceState.getString("KEY");
+14   editText.setText(savedText);
+15   Log.d(TAG, "Відновлення");
+16 }
+
+
+
