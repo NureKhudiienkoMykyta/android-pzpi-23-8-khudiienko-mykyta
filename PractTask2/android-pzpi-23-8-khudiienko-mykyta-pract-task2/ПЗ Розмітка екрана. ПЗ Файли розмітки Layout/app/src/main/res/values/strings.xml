@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">PraktTask2</string>
+    <string name="button_linear_1">Button_linear</string>
+    <string name="button_1">Натисни мене!</string>
+    <string name="text_change">Такий текст</string>
+    <string name="text_color">Такий колір</string>
+    <string name="button_inf">Повідомлення!</string>
+    <string name="button_change">Змінити!</string>
+</resources>
