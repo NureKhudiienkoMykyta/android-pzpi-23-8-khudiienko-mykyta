@@ -2,3 +2,5 @@
 build.gradle.kts
 proguard-rules.pro
 .idea/
+/src/androidTest
+/src/test
