@@ -19,3 +19,4 @@ gradlew
 gradle.properties
 build.gradle.kts
 gradle/
+.idea/
