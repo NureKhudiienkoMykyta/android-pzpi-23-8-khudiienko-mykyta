@@ -1,0 +1,335 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи № 2 
+з дисципліни
+"Програмування під Android"
+
+
+
+
+
+
+
+
+
+Виконав ст. гр ПЗПІ-23-8
+Худієнко Микита Віталійович
+
+
+Перевірив 
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+
+Харків 2024
+Завдання
+Розробити редактор, у якому з допомогою трьох регуляторів SeekBar встановлюється колір панелі.
+Регулятори визначають RGB компоненти кольору панелі. Зовнішній вигляд екрану редактора повинен залежати від орієнтації пристроя. У портретній орієнтації пристроя, регулятори повинні знаходитися знизу від панелі, займати 1/3 висоти і розташовуватися на всю ширину екрану. У ланшафтній – праворуч від панелі і займати 1/3 ширини. Решту екрану повинна займати кольорова панель.
+Хід роботи
+Створюємо новий проєкт Empty Views Activity. У файлі layout\activity_main.xml створюємо лінійну розмітку LinearLayout з вертикальною орієнтацією. В цій розмітці додаємо елемент View, який займає 2/3 екрану та відображає поточний колір:  
+1 <View
+2  android:id="@+id/view"
+3  android:layout_width="match_parent"
+4  android:layout_height="wrap_content"
+5  android:layout_weight="1"
+6  android:background="@color/black"/>
+Іншу частину першого LinearLayout заповниму трьома SeekBar, за допомогою яких будемо регулювати колір на кольоровій панелі (View). Ці SeekBar знаходяться у другій LinearLayout з вертикальною орієнтацією (див. Додаток Б). 
+У ландшафтній орієнтації пристрою, регулятори повинні знаходитися праворуч від панелі і займати 1/3 ширини. Решту екрану повинна займати кольорова панель. Для цього у файлі layout-land\activity_main.xml створюємо лінійну розмітку екрана з горизонтальною орієнтацією. У цій розмінці знаходиться два елементи View, який займає 2/3 екрану та LinearLayout, в якому містяться три SeekBar. Вкладений LinearLayout займає решту місця екрана да має вертикальну орієнтацію (див. Додаток В).
+У файлі MainActivity.java оголошуємо зміні:
+1 private View colorPanel;
+2 private SeekBar redSeekBar, blueSeekBar, greenSeekBar;
+3 private int red, green, blue;
+colorPanel — це панель (View), фон якої змінюється на основі вибраного кольору.
+redSeekBar, greenSeekBar, blueSeekBar — це слайдери (SeekBars) для зміни значень червоного, зеленого та синього кольорів.
+red, green, blue — змінні, які зберігають поточні значення кольорів.
+У методі onCreate ідентифікуються компоненти інтерфейсу: панель кольору та три слайдери:
+1 colorPanel = findViewById(R.id.view);
+2 redSeekBar = findViewById(R.id.seekBarRed);
+3 greenSeekBar = findViewById(R.id.seekBarGreen);
+4 blueSeekBar = findViewById(R.id.seekBarBlue);
+	Далі створюємо слухач подій для слайдерів SeekBar.OnSeekBarChangeListener listener, що реагує на зміну їх положення: у методі onProgressChanged змінюється значення змінної (відповідно до слайдера). Цей метод викликається, коли змінюється положення слайдера, потім оновлює відповідну змінну (red, green, або blue) новим значенням progress та викликає updateColor() для оновлення кольору панелі (див. Додаток Г). 
+	Усі слайдери отримують одного й того ж обробника:
+1 redSeekBar.setOnSeekBarChangeListener(listener);
+2 greenSeekBar.setOnSeekBarChangeListener(listener);
+3 blueSeekBar.setOnSeekBarChangeListener(listener);
+	Метод updateColor() встановлює фон панелі colorPanel на основі поточного значення red, green, blue:
+1 private void updateColor() {
+2   colorPanel.setBackgroundColor(Color.rgb(red, green, blue));
+3 }
+	Для збереження кольорів перед поворотом екрану використовуємо метод onSaveInstanceState, який зберігає поточні значення змінних red, green, blue в об’єкт Bundle за допомогою методу putInt(String key, int value):
+1 protected void onSaveInstanceState(@NonNull Bundle outState) {
+2   super.onSaveInstanceState(outState);
+3   outState.putInt("red", red);
+4   outState.putInt("green", green);
+5   outState.putInt("blue", blue);
+6 }
+	Для відновлення стану активності після її знищення та перезапуску використовуємо метод onRestoreInstanceState, який витягує збережені значення red, green, blue за їхніми ключами та викликає метод updateColor(), щоб оновити колір панелі після відновлення значень:
+1 protected void onRestoreInstanceState(@NonNull Bundle 
+2 savedInstanceState) {
+3   super.onRestoreInstanceState(savedInstanceState);
+4   red = savedInstanceState.getInt("red", 0);
+5   green = savedInstanceState.getInt("green", 0);
+6   blue = savedInstanceState.getInt("blue", 0);
+7   updateColor();
+8 }
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ ВИСНОВКИ
+
+
+В ході виконання лабораторної роботи було розроблено редактор, у якому з допомогою трьох регуляторів SeekBar встановлюється колір панелі.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ВИКОРИСТАНІ ДЖЕРЕЛА
+
+
+1 SeekBar. Developers. URL: https://developer.android.com/reference/android/widget/SeekBar (дата звернення: 18.11.2024).
+2 Посилання на відеозвіт у YouTube. URL: https://youtu.be/C6EHowLD5Pk
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК А
+
+
+Програмний код опубліковано на GitHub. URL: https://github.com/NureKhudiienkoMykyta/android-pzpi-23-8-khudiienko-mykyta
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК Б
+
+
+1<LinearLayout
+2   android:layout_width="match_parent"
+3   android:layout_height="match_parent"
+4   android:orientation="vertical"
+5   android:layout_weight="2">
+6   <SeekBar
+7       android:id="@+id/seekBarGreen"
+8       android:layout_width="match_parent"
+9       android:layout_height="wrap_content"
+10      android:layout_marginVertical="24dp"
+11      android:max="255"/>
+12
+13  <SeekBar
+14      android:id="@+id/seekBarRed"
+15      android:layout_width="match_parent"
+16      android:layout_height="wrap_content"
+17      android:layout_marginVertical="24dp"
+18      android:max="255"/>
+19   <SeekBar
+20      android:id="@+id/seekBarBlue"
+21      android:layout_width="match_parent"
+22      android:layout_height="wrap_content"
+23     android:layout_marginVertical="24dp"
+24     android:max="255"/>
+25 </LinearLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК В
+1 <LinearLayout
+2   android:layout_width="match_parent"
+3   android:layout_height="match_parent"
+4   android:orientation="horizontal">
+5   <View
+6    android:id="@+id/view"
+7    android:layout_width="match_parent"
+8    android:layout_height="wrap_content"
+9    android:layout_weight="1"
+10   android:background="@color/black" />
+11   <LinearLayout
+12    android:layout_width="match_parent"
+13    android:layout_height="match_parent"
+14    android:layout_weight="2"
+15    android:orientation="vertical">
+16       <SeekBar
+17          android:id="@+id/seekBarGreen"
+18          android:layout_width="match_parent"
+19          android:layout_height="wrap_content"
+20          android:layout_marginVertical="24dp"
+21          android:max="255"/>
+22       <SeekBar
+23           android:id="@+id/seekBarRed"
+24           android:layout_width="match_parent"
+25           android:layout_height="wrap_content"
+26           android:layout_marginVertical="24dp"
+27           android:max="255"/>
+28       <SeekBar
+29           android:id="@+id/seekBarBlue"
+30           android:layout_width="match_parent"
+31           android:layout_height="wrap_content"
+32           android:layout_marginVertical="24dp"
+33           android:max="255"/>
+34   </LinearLayout>
+35 </LinearLayout>
+
+
+
+
+
+ДОДАТОК Г
+
+1 SeekBar.OnSeekBarChangeListener listener = new 
+2 SeekBar.OnSeekBarChangeListener() {
+3   @Override
+4   public void onProgressChanged(SeekBar seekBar, int progress, 
+5  boolean fromUser) {
+6       if (seekBar == redSeekBar) red = progress;
+7       if (seekBar == greenSeekBar) green = progress;
+8       if (seekBar == blueSeekBar) blue = progress;
+9       updateColor();
+10   }
+11   @Override
+12   public void onStartTrackingTouch(SeekBar seekBar) {}
+13   @Override
+14   public void onStopTrackingTouch(SeekBar seekBar) {}
+15 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
