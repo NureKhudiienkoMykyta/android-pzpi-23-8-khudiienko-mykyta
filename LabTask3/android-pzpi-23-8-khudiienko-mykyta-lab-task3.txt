@@ -1,0 +1,283 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи № 3
+з дисципліни
+"Програмування під Android"
+
+
+
+
+
+
+
+
+
+Виконав ст. гр ПЗПІ-23-8
+Худієнко Микита Віталійович
+
+
+Перевірив 
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+
+Харків 2024
+Завдання
+Розробити калькулятор на 4 базові арифметичні операції з кнопками для введення аргументів і дій.
+Калькулятор повинен мати адаптивний користувацький інтерфейс у різних орієнтаціях екрану та на екранах різної роздільної здатності.
+
+Хід роботи
+Створюємо новий проєкт Empty Views Activity. У файлі layout\activity_main.xml створюємо лінійну розмітку LinearLayout з вертикальною орієнтацією. Додаємо EditText для введення операндів, яка займає більше третини місця та має gravity="end|bottom":
+1 <EditText
+2   android:id="@+id/editText"
+3   android:background="@color/black"
+4   android:textColor="@color/white"
+5   android:textSize="36sp"
+6   android:gravity="end|bottom"
+7   android:layout_width="match_parent"
+8   android:layout_height="wrap_content"
+9   android:ems="10"
+10  android:layout_weight="6"
+11  android:inputType="text"
+12  android:text="@string/_0"
+13  android:padding="10dp"/>
+	Іншу частину LinearLayout буде займати GridLayout, в якому додано кнопки для вводу чисел, очищення, додавання, віднімання, множення, ділення та кома для введення чисел з дробовою частиною. Для кнопок, які реалізують числа додаємо обробник подій “numberClickListener”. Вигляд застосунку у портретній формі можна побачити на рисунку 3.1.
+
+
+Рисунок 3.1 - Портретна форма застосунку
+
+	Для ландшафтної форми застосунку додамо LinearLayout з горизонтальною орієнтацією, в лівій частині якої  буде GridLayout з кнопка в середині, а в іншій частині екрану EditText для введення операндів. Вигляд застосунку у ландшафтній формі можна побачити на рисунку 3.2.
+
+Рисунок 3.1 - Ландшафтна форма застосунку
+
+	Для реалізації обробників подій та методів, які будуть реалізовані в обробниках відкриємо файл MainActivity.java.
+	Оголошуємо змінні:
+1 private EditText editText;
+2 private String input = "";
+3 private double firstNumber = 0;
+4 private String operator = "";
+EditText editText: поле введення, яке використовується для відображення введених чисел і результатів.
+String input: змінна для зберігання поточного введеного числа у вигляді тексту.
+double firstNumber: змінна для зберігання першого числа при виконанні операцій.
+String operator: змінна для зберігання оператора (+, -, *, /).
+Реалізуємо обробник подій numberClickListener для кнопок з числами, де 
+Button button = (Button) v;: визначається, яка кнопка була натиснута.
+input += button.getText().toString();: додається текст із кнопки до змінної input.
+editText.setText(input);: відображає введене число у полі editText.
+1 View.OnClickListener numberClickListener = new 
+2 View.OnClickListener() {
+3   @Override
+4   public void onClick(View v) {
+5       Button button = (Button) v;
+6       input += button.getText().toString();
+7       editText.setText(input);
+8   }
+9 };
+Прив’язуємо обробник до кнопок: 
+1 findViewById(R.id.but_0).setOnClickListener(numberClickListener);
+2 findViewById(R.id.but_1).setOnClickListener(numberClickListener);
+3 findViewById(R.id.but_2).setOnClickListener(numberClickListener);
+4 findViewById(R.id.but_3).setOnClickListener(numberClickListener);
+5 findViewById(R.id.but_4).setOnClickListener(numberClickListener);
+6 findViewById(R.id.but_5).setOnClickListener(numberClickListener);
+7 findViewById(R.id.but_6).setOnClickListener(numberClickListener);
+8 findViewById(R.id.but_7).setOnClickListener(numberClickListener);
+9 findViewById(R.id.but_8).setOnClickListener(numberClickListener);
+10 findViewById(R.id.but_9).setOnClickListener(numberClickListener);
+	Створюємо обробники подій для інших кнопок, а саме для очищення, додавання, віднімання, множення, ділення та кома для введення чисел з дробовою частиною (див Додаток Б). Для кнопок арифметичних операцій в обробнику реалізується метод setOperator(String op), який зберігає перше число, зберігає оператор, очищує введення для другого числа та  очищує екран: 
+1 private void setOperator(String op) {
+2   if (!input.isEmpty()) {
+3       firstNumber = Double.parseDouble(input);
+4       operator = op;
+5       input = "";
+6       editText.setText("");
+7   }
+8 }
+	Для кнопки очищення в обробнику реалізується метод clear(), який очищає всі змінні та екран:
+1 private void clear() {
+2   input = "";
+3   operator = "";
+4   firstNumber = 0;
+5   editText.setText("");
+6 }
+	Для кнопки “=” в обробнику реалізується метод calculate(), який перевіряє, чи є введені дані, отримує друге число, створює змінну для результату, визначає, який математичний оператор був обраний, виводе результат на екран, зберігає результат як нове введене число, очищує оператор для наступних обчислень (див. Додаток В).
+	Для кнопки, що реалізує кому для дробової частини числа, створимо обробник, який перевіряє, чи вже є крапка, якщо введення порожнє, додаємо "0."; якщо є число, додаємо крапку; оновлює відображення на екрані:
+43 findViewById(R.id.but_koma).setOnClickListener(new 
+44 View.OnClickListener() {
+45   @Override
+46   public void onClick(View v) {
+47       if (!input.contains(".")) {
+48           if (input.isEmpty()) {
+49               input = "0.";
+50           } else {
+51               input += ".";
+52           }
+53           editText.setText(input);
+54       }
+55   }
+56 });
+
+Щоб забезпечити збереження стану, використаємо методи onSaveInstanceState, який зберігає input: текст, який користувач ввів, firstNumber: перше число для обчислень, operator: обраний оператор; та onRestoreInstanceState, який відновлює ці значення та оновлює інтерфейс:
+
+1 @Override
+2 protected void onSaveInstanceState(Bundle outState) {
+3   super.onSaveInstanceState(outState);
+4   outState.putString("input", input);
+5   outState.putDouble("firstNumber", firstNumber);
+6   outState.putString("operator", operator);
+7 }
+8 @Override
+9 protected void onRestoreInstanceState(Bundle savedInstanceState) {
+10   super.onRestoreInstanceState(savedInstanceState);
+11   input = savedInstanceState.getString("input", "");
+12   firstNumber = savedInstanceState.getDouble("firstNumber", 0);
+13   operator = savedInstanceState.getString("operator", "");
+14   editText.setText(input);
+15 }
+
+
+
+
+
+ВИСНОВКИ
+
+
+В ході виконання лабораторної роботи було розроблено калькулятор на 4 базові арифметичні операції з кнопками для введення аргументів і дій.
+Калькулятор матє адаптивний користувацький інтерфейс у різних орієнтаціях екрану
+
+
+
+
+
+ВИКОРИСТАНІ ДЖЕРЕЛА
+
+
+1 Обробка подій (на прикладі обробки натискання кнопок). DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599276 (дата звернення: 1.12.2024)
+2 Розмітка екрана. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=583063 (дата звернення: 1.12.2024)
+3 Посилання на відеозвіт у YouTube. URL: https://youtu.be/BpyvEOqyCxY
+
+
+
+
+
+ДОДАТОК А
+
+
+Програмний код опубліковано на GitHub. URL: https://github.com/NureKhudiienkoMykyta/android-pzpi-23-8-khudiienko-mykyta
+
+
+
+
+ДОДАТОК Б
+
+
+1 findViewById(R.id.but_ac).setOnClickListener(new 
+2 View.OnClickListener() {
+3   @Override
+4   public void onClick(View v) {
+5       clear();
+6   }
+7 });
+8 findViewById(R.id.but_del).setOnClickListener(new 
+9 View.OnClickListener() {
+10   @Override
+11   public void onClick(View v) {
+12       setOperator("/");
+13   }
+14 });
+15 findViewById(R.id.but_dob).setOnClickListener(new 
+16 View.OnClickListener() {
+17   @Override
+18   public void onClick(View v) {
+19       setOperator("*");
+20   }
+21 });
+22 findViewById(R.id.but_eq).setOnClickListener(new 
+23 View.OnClickListener() {
+24   @Override
+25   public void onClick(View v) {
+26       calculate();
+27   }
+28 });
+29 findViewById(R.id.but_min).setOnClickListener(new 
+30 View.OnClickListener() {
+31   @Override
+32   public void onClick(View v) {
+33       setOperator("-");
+34   }
+35 });
+36 findViewById(R.id.but_plus).setOnClickListener(new 
+37 View.OnClickListener() {
+38   @Override
+39  public void onClick(View v) {
+40      setOperator("+");
+41  }
+42 });
+43 findViewById(R.id.but_koma).setOnClickListener(new 
+44 View.OnClickListener() {
+45   @Override
+46   public void onClick(View v) {
+47       if (!input.contains(".")) {
+48           if (input.isEmpty()) {
+49               input = "0.";
+50           } else {
+51               input += ".";
+52           }
+53           editText.setText(input);
+54       }
+55   }
+56 });
+
+
+
+
+
+
+ДОДАТОК В
+
+
+private void calculate() {
+   if (!input.isEmpty() && !operator.isEmpty()) {
+       double secondNumber = Double.parseDouble(input);
+       double result = 0;
+
+       switch (operator) {
+           case "+":
+               result = firstNumber + secondNumber;
+               break;
+           case "-":
+               result = firstNumber - secondNumber;
+               break;
+           case "*":
+               result = firstNumber * secondNumber;
+               break;
+           case "/":
+               if (secondNumber != 0) {
+                   result = firstNumber / secondNumber;
+               } else {
+                   editText.setText("Error");
+                   return;
+               }
+               break;
+       }
+
+       editText.setText(String.valueOf(result));
+       input = String.valueOf(result);
+       operator = "";
+   }
+}
+
