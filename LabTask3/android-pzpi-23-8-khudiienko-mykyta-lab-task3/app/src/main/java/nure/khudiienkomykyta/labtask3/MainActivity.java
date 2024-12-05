@@ -25,8 +25,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
         editText =findViewById(R.id.editText);
+    }
+
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
 
         View.OnClickListener numberClickListener = new View.OnClickListener() {
             @Override
@@ -48,13 +54,6 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.but_7).setOnClickListener(numberClickListener);
         findViewById(R.id.but_8).setOnClickListener(numberClickListener);
         findViewById(R.id.but_9).setOnClickListener(numberClickListener);
-
-    }
-
-
-    @Override
-    protected void onStart() {
-        super.onStart();
 
         findViewById(R.id.but_ac).setOnClickListener(new View.OnClickListener() {
             @Override

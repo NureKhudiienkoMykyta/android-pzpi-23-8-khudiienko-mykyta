@@ -29,7 +29,6 @@
                 android:backgroundTint="#D31616"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_7"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -40,7 +39,6 @@
                 android:backgroundTint="@color/grey"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_8"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -51,7 +49,6 @@
                 android:backgroundTint="@color/grey"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_9"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -72,7 +69,6 @@
                 android:backgroundTint="@color/orange"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_4"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -83,7 +79,6 @@
                 android:backgroundTint="@color/grey"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_5"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -94,7 +89,6 @@
                 android:backgroundTint="@color/grey"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_6"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -115,7 +109,6 @@
                 android:backgroundTint="@color/orange"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_1"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -126,7 +119,6 @@
                 android:backgroundTint="@color/grey"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_2"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -137,7 +129,6 @@
                 android:backgroundTint="@color/grey"/>
 
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_3"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
@@ -157,7 +148,6 @@
                 app:layout_row="3"
                 android:backgroundTint="@color/orange"/>
             <Button
-                android:onClick="numberClickListener"
                 android:id="@+id/but_0"
                 android:layout_width="80dp"
                 android:layout_height="80dp"
