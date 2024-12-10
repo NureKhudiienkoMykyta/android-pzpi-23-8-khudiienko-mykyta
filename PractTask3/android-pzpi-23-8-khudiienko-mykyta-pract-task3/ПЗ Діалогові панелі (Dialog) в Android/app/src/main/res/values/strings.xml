@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PractTask3-1</string>
+    <string name="show_dialog">Show Dialog</string>
+    <string name="show_datepicker">Show DatePicker</string>
+    <string name="customDialogText">Це індивідуальна діалогова панель</string>
+    <string name="customDialogInput">Введіть текст</string>
+    <string name="show_custom">show Custom</string>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PractTask3-2</string>
+    <string name="start_handler">Start Handler</string>
+    <string name="message_will_appear_here">Message will appear here</string>
+    <string name="background_thread_example">Background Thread Example</string>
+    <string name="send_message_example">Send Message Example</string>
+    <string name="handlerthread_example">HandlerThread Example</string>
+</resources>
