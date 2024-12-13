@@ -1,0 +1,226 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+ЗВІТ
+з практичної роботи № 4 
+з дисципліни
+"Програмування під Android"
+на тему "Сховища даних (Preferences, база даних SQLite, файли)" 
+
+
+
+
+
+
+
+Виконав ст. гр ПЗПІ-23-8
+Худієнко Микита Віталійович
+
+
+Перевірив 
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+
+
+Харків 2024
+Завдання
+1. Робота з SharedPreferences:
+Створіть простий застосунок, який дозволяє зберігати та відображати налаштування користувача (наприклад, ім'я та вік).
+При натисканні на кнопку дані мають записуватися у SharedPreferences, а при перезапуску застосунку — автоматично зчитуватися.
+2. Робота з SQLite:
+Створіть базу даних для збереження інформації про користувачів (ім'я, вік).
+Реалізуйте додавання нових користувачів у базу через форму введення.
+Відобразіть список користувачів на екрані.
+3. Робота з файлами:
+Створіть функціонал для запису текстових даних у файл.
+Реалізуйте можливість зчитування цього файлу та відображення вмісту на екрані.
+
+Хід роботи
+1 Створюю новий проєкт. Додаю до activity_main.xml два EditText для введення імені та кількості років, TextView для відображення зчитуваних даних з SharedPreferences  при перезапуску застосунку, Button для запису даних у SharedPreferences (див. Додаток Б).
+	У файлі MainActivity.java ініціалізуємо елементи інтерфейсу та отримаємо об’єкт SharedPreferences використовуючи метод getSharedPreferences("MyPrefs", MODE_PRIVATE):
+1 EditText editTextName = findViewById(R.id.editTextName);
+2 EditText editTextAge = findViewById(R.id.editTextAge);
+3 Button buttonSaveSharedPreferences = 
+4 findViewById(R.id.buttonSaveSharedPreferences);
+5 TextView textViewDisplay = findViewById(R.id.textViewDisplay);
+6 SharedPreferences sharedPreferences = 
+7 getSharedPreferences("MyPrefs", MODE_PRIVATE);
+	Для збереження даних у SharedPreferences  при натисканні кнопки, створимо обробник, в якому отримується об'єкт Editor, який дозволяє вносити зміни до об'єкта SharedPreferences; зберігає значення та застосовує зміни.
+1 buttonSaveSharedPreferences.setOnClickListener(new View.OnClickListener() {
+2   @Override
+3   public void onClick(View v) {
+4       String name = editTextName.getText().toString();
+5       String age = editTextAge.getText().toString();
+6       SharedPreferences.Editor editor = sharedPreferences.edit();
+7       editor.putString("name", name);
+8       editor.putString("age", age);
+9       editor.apply();
+10   }
+11 });
+	Для зчитування даних при запуску з SharedPreferences, витягуємо збережені дані з локального сховища SharedPreferences і відображаємо їх у текстовому полі textViewDisplay:
+1 String name = sharedPreferences.getString("name", "");
+2 String age = sharedPreferences.getString("age", "");
+3 textViewDisplay.setText(name + " "+ age);
+
+2 Створюємо клас DBHelper, який успадковується від SQLiteOpenHelper, в методі onCreate створюється відношення з id, name, age:
+1 public class DBHelper extends SQLiteOpenHelper {
+2   public DBHelper(Context context) {
+3       super(context, "MyDB", null, 1);
+4   }
+5   @Override
+6   public void onCreate(SQLiteDatabase db) {
+7       db.execSQL("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)");
+8   }
+9   @Override
+10   public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+11   }
+12 }
+
+	Для додавання даних в бд використовуємо наступний програмний код:
+1 buttonAddUser.setOnClickListener(v -> {
+2   ContentValues values = new ContentValues();
+3   values.put("name", editTextName.getText().toString());
+4   values.put("age", Integer.parseInt(editTextAge.getText().toString()));
+5   db.insert("users", null, values);
+6
+7   loadUsers();
+8});
+	Метод loadUsers(); використовується для завантаження та відображення даних з бази даних:
+1 private void loadUsers() {
+2   StringBuilder usersText = new StringBuilder();
+3   Cursor cursor = db.query("users", null, null, null, null, null, null);
+4   while (cursor.moveToNext()) {
+5       @SuppressLint("Range") String name =  cursor.getString(cursor.getColumnIndex("name"));
+6       @SuppressLint("Range") int age = cursor.getInt(cursor.getColumnIndex("age"));
+7       usersText.append("Name: ").append(name).append(", Age: ").append(age).append("\n");
+8   }
+9   cursor.close();
+10   textViewDisplay.setText(usersText.toString());
+}
+
+
+3 Додамо кнопки для збереження та відтворення даних з файлу. Також додамо поле для введення даних, які будуть зберігатись у файлі. Метод loadFromFile() читає дані з файлу "myfile.txt" та відображає їх у текстовому полі. Метод saveToFile() зберігає дані з текстового поля editTextText у файл "myfile.txt". Прив’язуємо ці методи до кнопок.
+1 private void saveToFile() {
+2   FileOutputStream fos;
+3   String text = editTextText.getText().toString();
+4   try {
+5       fos = openFileOutput("myfile.txt", MODE_PRIVATE);
+6       fos.write(text.getBytes());
+7       fos.close();
+8   } catch (Exception e) {
+9       e.printStackTrace();
+10   }
+11 }
+12 private void loadFromFile() {
+13   FileInputStream fis;
+14   try {
+15       fis = openFileInput("myfile.txt");
+16       int c;
+17       String temp = "";
+18       while( (c = fis.read()) != -1) {
+19           temp = temp + Character.toString((char)c);
+20       }
+21       fis.close();
+22       textViewDisplay.setText(temp.toString());
+23   }catch (Exception e) {
+24       e.printStackTrace();
+25   }
+26 }
+
+
+
+
+
+
+
+
+
+
+ ВИСНОВКИ
+
+У результаті виконання практичної роботи №4 ми ознайомились із різними способами збереження даних у Android, зокрема з використанням SharedPreferences, бази даних SQLite та роботи з файлами. 
+
+
+
+
+
+
+
+ВИКОРИСТАНІ ДЖЕРЕЛА
+
+
+1 Методичні вказівки до практичних занять: ПЗ Сховища даних (Preferences, база даних SQLite, файли). DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=611587 (дата звернення: 20.11.2024)
+2 Посилання на відеозвіт у YouTube. URL: https://youtu.be/jRgTOEly__U
+
+
+
+
+
+
+ДОДАТОК А
+
+
+Програмний код опубліковано на GitHub. URL: https://github.com/NureKhudiienkoMykyta/android-pzpi-23-8-khudiienko-mykyta
+
+
+
+
+ДОДАТОК Б
+1<EditText
+2   android:id="@+id/editTextName"
+3   android:layout_width="wrap_content"
+4   android:layout_height="wrap_content"
+5   android:layout_marginTop="16dp"
+6   android:ems="10"
+7   android:inputType="text"
+8   android:hint="Enter Name"
+9   app:layout_constraintEnd_toEndOf="parent"
+10  app:layout_constraintHorizontal_bias="0.079"
+11   app:layout_constraintStart_toStartOf="parent"
+12   app:layout_constraintTop_toTopOf="parent" />
+13<EditText
+14   android:id="@+id/editTextAge"
+15   android:layout_width="wrap_content"
+16   android:layout_height="wrap_content"
+17   android:layout_marginTop="8dp"
+18   android:ems="10"
+19   android:inputType="number"
+20   android:hint="Enter Age"
+21   app:layout_constraintEnd_toEndOf="parent"
+22   app:layout_constraintHorizontal_bias="0.079"
+23   app:layout_constraintStart_toStartOf="parent"
+24   app:layout_constraintTop_toBottomOf="@+id/editTextName" />
+25<Button
+26   android:id="@+id/buttonSaveSharedPreferences"
+27   android:layout_width="172dp"
+28   android:layout_height="69dp"
+29   android:layout_marginTop="16dp"
+30   android:layout_marginEnd="4dp"
+31   android:text="SharedPreferences"
+32   app:layout_constraintEnd_toEndOf="parent"
+33   app:layout_constraintTop_toTopOf="parent" />
+34<TextView
+35   android:id="@+id/textViewDisplay"
+36   android:layout_width="387dp"
+37   android:layout_height="92dp"
+38   android:layout_marginTop="12dp"
+39   android:text=""
+40   app:layout_constraintEnd_toEndOf="parent"
+41   app:layout_constraintHorizontal_bias="0.695"
+42   app:layout_constraintStart_toStartOf="parent"
+43   app:layout_constraintTop_toBottomOf="@+id/editTextAge" />
+
+
