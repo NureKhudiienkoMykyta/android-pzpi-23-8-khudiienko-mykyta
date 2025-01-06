@@ -1,0 +1,819 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи № 4
+з дисципліни
+"Програмування під Android"
+
+
+
+
+
+
+
+
+
+Виконав ст. гр ПЗПІ-23-8
+Худієнко Микита Віталійович
+
+
+Перевірив 
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+
+Харків 2024
+Завдання
+Розробити застосунок для ведення нотаток.
+Застосунок повинен дозволяти переглядати список нотаток, створювати нову нотатку, редагувати нотатку та видаляти нотатку. Кожна нотатка повинна мати назву, опис, важливість (три класи), час і дату призначення і картинку (вибирається з галереї).
+У списку нотатки відображаються з іконкою з галереї і часом створення (праворуч зверху більш дрібним шрифтом), а також графічним відображенням класу важливості (іконка з множини).
+Потрібно реалізувати функції додавання, видалення, редагування (без збереження між перезапуск додатку) нотаток.
+Видалення/редагування викликаються з контекстного меню при довгому натисненні, додавання - з основного меню в ActionBar. У ActionBar реалізувати пошук / фільтрація заміток за змістом тексту, а також фільтрацію за важливістю. Текстові елементи користувацького інтерфейсу повинні бути локалізовані українською та англійською мовами.
+
+Хід роботи
+Створюємо новий проєкт Empty Views Activity. Створюємо клас Note, який використовується для представлення однієї нотатки в додатку для ведення нотаток. В цьому класі реалізовані поля, конструктор, який  використовується для створення екземпляру нотатки з усіма її полями та геттери й сеттери.
+1 public class Note implements Serializable {
+2   private String title;
+3   private String description;
+4   private Priority priority;
+5   private Date dateTime;
+6   private String imageUri;
+7   public Note(String title, String description, Priority priority, Date dateTime, String imageUri) {
+8       this.title = title;
+9       this.description = description;
+10       this.priority = priority;
+11       this.dateTime = dateTime;
+12       this.imageUri = imageUri;
+13   }
+14   public String getTitle() {
+15       return title;
+16   }
+17   public void setTitle(String title) {
+18       this.title = title;
+19   }
+20}
+
+	Еnum Priority визначає три рівні пріоритету:
+HIGH: Високий пріоритет.
+MEDIUM: Середній пріоритет.
+LOW: Низький пріоритет.
+1 public enum Priority {
+2   HIGH, MEDIUM, LOW
+3 }
+
+	До файлу розмітки activity_main.xml додаємо RecycleView для відображення нотаток:
+1 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+2   xmlns:app="http://schemas.android.com/apk/res-auto"
+3   xmlns:tools="http://schemas.android.com/tools"
+4   android:id="@+id/main"
+5   android:layout_width="match_parent"
+6   android:layout_height="match_parent"
+7   tools:context=".MainActivity">
+8   <androidx.recyclerview.widget.RecyclerView
+9        android:id="@+id/recyclerView"
+10       android:layout_width="match_parent"
+11       android:layout_height="match_parent"
+12       app:layout_constraintBottom_toBottomOf="parent"
+13       app:layout_constraintEnd_toEndOf="parent"
+14       app:layout_constraintStart_toStartOf="parent"
+15       app:layout_constraintTop_toTopOf="parent" />
+16 </androidx.constraintlayout.widget.ConstraintLayout>
+
+	Нотатка має вигляд, що заданий у файлі note_item.xml(див. Додаток Б).
+	Створюємо папку menu. В ній створюємо main_menu.xml, який буде відображений як частина ActionBar:
+1.  <menu xmlns:android="http://schemas.android.com/apk/res/android"
+2.      xmlns:app="http://schemas.android.com/apk/res-auto">
+3.      <item
+4.          android:id="@+id/action_search"
+5.          android:title="Search"
+6.          app:actionViewClass="android.widget.SearchView"
+7.          app:showAsAction="always|collapseActionView"/>
+8.      <item
+9.          android:id="@+id/action_add"
+10.         android:title="Add Note"
+11.         app:showAsAction="always"/>
+12.     <item
+13.         android:id="@+id/action_filter"
+14.         android:title="Filter">
+15.         <menu>
+16.             <item
+17.                 android:id="@+id/filter_all"
+18.                 android:title="All"/>
+19.             <item
+20.                 android:id="@+id/filter_high"
+21.                 android:title="High Priority"/>
+22.             <item
+23.                 android:id="@+id/filter_medium"
+24.                 android:title="Medium Priority"/>
+25.             <item
+26.                 android:id="@+id/filter_low"
+27.                 android:title="Low Priority"/>
+28.         </menu>
+29.     </item>
+30. </menu>
+	Створюємо контекстне меню(при довгому натисканні на елемент) context_menu.xml  з двома пунктами: "Edit" (Редагувати) і "Delete" (Видалити):
+1 <menu xmlns:android="http://schemas.android.com/apk/res/android">
+2   <item
+3       android:id="@+id/action_edit"
+4       android:title="Edit" />
+5   <item
+6       android:id="@+id/action_delete"
+7       android:title="Delete" />
+8 </menu>
+	Створюємо нову Activity AddEditNoteActivity, для додавання та редагування нотаток. Для неї заповнюємо файл розмітки activity_add_edit_note.xml(див. Додаток В).
+	В файлі NotesAdapter.java створюємо клас NotesAdapter, який є адаптером для RecyclerView, який використовується для відображення списку нотаток. В цьому класі оголошуються поля, інтерфейс для довгого натискання(Методу onItemLongClick() передається View елемента і його позиція в списку), конструктор, який приймає список нотаток і зберігає його для використання в адаптері. Метод onCreateViewHolder() створює новий View для елемента списку (note_item.xml) та повертає новий екземпляр NoteViewHolder. Метод onBindViewHolder() використовується для заповнення вмісту елемента списку (тобто ViewHolder) даними на певній позиції (position). Метод loadImageFromUri() завантажує зображення з URI, оптимізуючи його розмір для економії пам'яті; у разі помилки встановлює стандартне зображення-плейсхолдер. Метод getItemCount() повертає кількість елементів у списку нотаток. Метод setOnItemLongClickListener() встановлює обробник для довгих кліків. Метод updateList() оновлює список нотаток і повідомляє адаптер, що дані змінилися. Внутрішній клас NoteViewHolder  зберігає посилання на елементи View для одного елемента списку та визначає обробник довгих кліків для елемента списку. Програмний код див. Додаток Г.
+	В файлі AddEditNoteActivity реалізовано метод onCreate(Bundle savedInstanceState), який викликається при створенні активності. Він ініціалізує елементи інтерфейсу користувача та налаштовує функціональність для введення та редагування нотаток. Цей метод ініціалізує змінні, що відповідають за компоненти інтерфейсу (наприклад, EditText, Spinner, Button), викликає метод для налаштування Spinner (вибір пріоритету), перевіряє, чи відбувається редагування існуючої нотатки, налаштовує слухачів подій для кнопок. Метод setupPrioritySpinner() налаштовує адаптер для Spinner (вибір пріоритету) і надає йому список можливих значень пріоритетів. Він Створює адаптер для Spinner, який наповнюється значеннями з переліку Priority та встановлює стиль для елементів списку в Spinner. Метод checkForEditingNote() перевіряє, чи активність виконується для редагування існуючої нотатки. Якщо так, заповнює поля вводу даними цієї нотатки. Якщо в інтенсі є передана нотатка (через ключ "note"), вона відновлюється з допомогою getSerializableExtra. Якщо редагується існуюча нотатка, метод викликає fillFieldsWithNote для заповнення полів інтерфейсу даними цієї нотатки. Метод setupClickListeners() налаштовує слухачів подій для кнопок вибору зображення та збереження нотатки. Метод  fillFieldsWithNote(Note note) заповнює поля вводу значеннями з переданої нотатки (заголовок, опис, пріоритет, зображення). Він встановлює текстові значення для заголовка та опису, встановлює вибір пріоритету в Spinner за індексом значення в Priority, якщо є зображення у нотатки, воно завантажується в ImageView за допомогою loadImage. Метод selectImage() відкриває файловий менеджер для вибору зображення з пам'яті пристрою. Він створює Intent для відкриття діалогу вибору зображення, встановлює тип MIME для вибору лише зображень, додає прапор Intent.FLAG_GRANT_READ_URI_PERMISSION, щоб отримати дозвіл на читання вибраного зображення, викликає startActivityForResult, щоб обробити результат вибору. Метод onActivityResult(int requestCode, int resultCode, Intent data) обробляє результат вибору зображення після повернення з активності вибору. Він перевіряє, чи є результат вибору зображення (під час виклику selectImage), якщо вибір успішний, отримує URI зображення і завантажує його через метод loadImage. Метод loadImage(Uri uri) завантажує зображення з вказаного URI і показує його в ImageView з оптимізацією для пам'яті. Він відкриває потік для зчитування зображення з вказаного URI, використовує BitmapFactory.Options для перевірки розмірів зображення, щоб завантажити його зменшеним розміром, що економить пам'ять, завантажує зображення і відображає його в ImageView. Якщо виникає помилка, виводить повідомлення про помилку. Метод saveNote() зберігає нотатку, перевіряючи введені значення, і відправляє її назад до попередньої активності. Він отримує значення з полів вводу (заголовок, опис, пріоритет, URI зображення), перевіряє, чи введено заголовок (якщо ні, виводиться помилка), створює нову нотатку і додає її до результату, якщо редагується існуюча нотатка, додає її позицію в результат, відправляє результат назад в активність, що викликала цю активність, через setResult() і закриває активність через finish().  Програмний код див. Додаток Д.
+	В файлі MainActivity.java реалізовані такі методи:
+1. onCreate(Bundle savedInstanceState).Цей метод викликається під час створення активності. У ньому:
+Ініціалізуються елементи інтерфейсу:
+notesList — список нотаток.
+recyclerView — віджет RecyclerView, який буде відображати список нотаток.
+adapter — адаптер для RecyclerView, який управляє відображенням нотаток.
+Встановлюється LayoutManager для recyclerView (у цьому випадку, LinearLayoutManager для вертикального списку).
+Налаштовується обробник довгого натискання на елемент RecyclerView, щоб показувати контекстне меню.
+2. onCreateOptionsMenu(Menu menu)
+Цей метод створює та відображає меню (використовується для пошуку).
+Меню інфлюється з ресурсу main_menu.
+Налаштовується SearchView, який фільтрує список нотаток за текстом.
+Реалізовані методи onQueryTextSubmit та onQueryTextChange для обробки введення тексту в пошуковому полі. Вони викликають метод filterNotes(query) для фільтрації нотаток.
+3. filterNotes(String query)
+Цей метод фільтрує список нотаток за назвою та описом.
+Проходиться по всіх нотатках і перевіряє, чи містять їх назва або опис введений текст.
+Використовується adapter.updateList(filteredList) для оновлення адаптера із фільтрованим списком нотаток.
+4. filterByPriority(Priority priority)
+Цей метод фільтрує нотатки за їх пріоритетом.
+Якщо параметр priority дорівнює null, відображаються всі нотатки.
+Якщо вказано конкретний пріоритет (HIGH, MEDIUM, LOW), фільтрується список нотаток відповідно до цього пріоритету.
+5. onOptionsItemSelected(MenuItem item)
+Цей метод обробляє вибір елементів меню.
+Якщо вибрано один із фільтрів (наприклад, filter_all, filter_high тощо), викликається метод filterByPriority().
+Якщо натиснуто action_add, відкривається активність для додавання нової нотатки (AddEditNoteActivity).
+6. onActivityResult(int requestCode, int resultCode, Intent data)
+Цей метод викликається, коли інша активність (наприклад, AddEditNoteActivity) завершується.
+Якщо додано або відредаговано нову нотатку, вона додається до списку notesList, або оновлюється існуюча нотатка.
+Після цього викликається adapter.notifyDataSetChanged() для оновлення списку у RecyclerView.
+7. onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+Цей метод викликається для створення контекстного меню для елементів списку в RecyclerView.
+За допомогою MenuInflater інфлюється контекстне меню з ресурсу context_menu.
+8. onContextItemSelected(MenuItem item)
+Цей метод обробляє вибір елементів контекстного меню (яке з'являється при довгому натисканні на елемент).
+Якщо вибрано action_edit, відкривається активність для редагування нотатки (AddEditNoteActivity) і передається позиція цієї нотатки.
+Якщо вибрано action_delete, нотатка видаляється зі списку notesList і RecyclerView оновлюється методом notifyItemRemoved(position).
+
+
+
+
+
+
+
+
+ВИСНОВКИ
+
+
+В ході виконання лабораторної роботи було розроблено застосунок  для ведення нотаток.
+Застосунок дозволяє переглядати список нотаток, створювати нову нотатку, редагувати нотатку та видаляти нотатку. Кожна нотатка повинна мати назву, опис, важливість (три класи), час і дату призначення і картинку (вибирається з галереї).
+У списку нотатки відображаються з іконкою з галереї і часом створення (праворуч зверху більш дрібним шрифтом), а також графічним відображенням класу важливості (іконка з множини).
+Реалізовані функції додавання, видалення, редагування (без збереження між перезапуск додатку) нотаток.
+Видалення/редагування викликаються з контекстного меню при довгому натисненні, додавання - з основного меню в ActionBar. У ActionBar реалізований пошук / фільтрація заміток за змістом тексту, а також фільтрацію за важливістю.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ВИКОРИСТАНІ ДЖЕРЕЛА
+
+
+1 Обробка подій (на прикладі обробки натискання кнопок). DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599276 (дата звернення: 30.12.2024)
+2 Розмітка екрана. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=583063 (дата звернення: 30.12.2024)
+3 Посилання на відеозвіт у YouTube. URL: https://youtu.be/_PYtCNbV-Yo
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК А
+
+
+Програмний код опубліковано на GitHub. URL: https://github.com/NureKhudiienkoMykyta/android-pzpi-23-8-khudiienko-mykyta
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК Б
+
+1.  <androidx.cardview.widget.CardView
+2.     xmlns:android="http://schemas.android.com/apk/res/android"
+3.     xmlns:app="http://schemas.android.com/apk/res-auto"
+4.     android:layout_width="match_parent"
+5.     android:layout_height="wrap_content"
+6.     android:layout_margin="8dp"
+7.     app:cardCornerRadius="8dp"
+8.     app:cardElevation="4dp">
+9.     
+10.     <LinearLayout
+11.         android:layout_width="match_parent"
+12.         android:layout_height="wrap_content"
+13.         android:orientation="horizontal"
+14.         android:padding="8dp">
+15.         
+16.         <ImageView
+17.             android:id="@+id/note_image"
+18.             android:layout_width="60dp"
+19.             android:layout_height="60dp"
+20.             android:scaleType="centerCrop"/>
+21.         
+22.         <LinearLayout
+23.             android:layout_width="0dp"
+24.             android:layout_height="wrap_content"
+25.             android:layout_weight="1"
+26.             android:orientation="vertical"
+27.             android:layout_marginStart="8dp">
+28.             
+29.             <TextView
+30.                 android:id="@+id/note_title"
+31.                 android:layout_width="wrap_content"
+32.                 android:layout_height="wrap_content"
+33.                 android:textSize="16sp"
+34.                 android:textStyle="bold"/>
+35.             
+36.             <TextView
+37.                 android:id="@+id/note_date"
+38.                 android:layout_width="wrap_content"
+39.                 android:layout_height="wrap_content"
+40.                 android:textSize="12sp"
+41.                 android:layout_gravity="end"/>
+42.             
+43.         </LinearLayout>
+44.         
+45.         <ImageView
+46.             android:id="@+id/priority_icon"
+47.             android:layout_width="24dp"
+48.             android:layout_height="24dp"
+49.             android:layout_gravity="center_vertical"
+50.             android:layout_marginStart="8dp"/>
+51.         
+52.     </LinearLayout>
+53.     
+54. </androidx.cardview.widget.CardView>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК В
+
+1.  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+2.      android:layout_width="match_parent"
+3.      android:layout_height="match_parent"
+4.      android:orientation="vertical"
+5.      android:padding="16dp">
+6.      <EditText
+7.          android:id="@+id/edit_title"
+8.          android:layout_width="match_parent"
+9.          android:layout_height="wrap_content"
+10.         android:hint="Title"
+11.         android:inputType="text"
+12.         android:maxLines="1" />
+13.     <EditText
+14.         android:id="@+id/edit_description"
+15.         android:layout_width="match_parent"
+16.         android:layout_height="wrap_content"
+17.         android:layout_marginTop="8dp"
+18.         android:hint="Description"
+19.         android:inputType="textMultiLine"
+20.         android:minLines="3" />
+21.     <Spinner
+22.         android:id="@+id/priority_spinner"
+23.         android:layout_width="match_parent"
+24.         android:layout_height="wrap_content"
+25.         android:layout_marginTop="8dp" />
+26.     <Button
+27.         android:id="@+id/btn_select_image"
+28.         android:layout_width="wrap_content"
+29.         android:layout_height="wrap_content"
+30.         android:layout_marginTop="8dp"
+31.         android:text="Select Image" />
+32.     <ImageView
+33.         android:id="@+id/selected_image"
+34.         android:layout_width="200dp"
+35.         android:layout_height="200dp"
+36.         android:layout_marginTop="8dp"
+37.         android:scaleType="centerCrop" />
+38.     <Button
+39.         android:id="@+id/btn_save"
+40.         android:layout_width="match_parent"
+41.         android:layout_height="wrap_content"
+42.         android:layout_marginTop="16dp"
+43.         android:text="Save" />
+44. </LinearLayout>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Додаток Г
+
+1  public class NotesAdapter extends RecyclerView.Adapter<NotesAdapter.NoteViewHolder> {
+2      private List<Note> notes;
+3      private OnItemLongClickListener longClickListener;
+4  
+5      public interface OnItemLongClickListener {
+6          boolean onItemLongClick(View view, int position);
+7      }
+8  
+9      public NotesAdapter(List<Note> notes) {
+10         this.notes = notes;
+11     }
+12 
+13     @Override
+14     public NoteViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+15         View view = LayoutInflater.from(parent.getContext())
+16                 .inflate(R.layout.note_item, parent, false);
+17         return new NoteViewHolder(view);
+18     }
+19 
+20     @Override
+21     public void onBindViewHolder(NoteViewHolder holder, int position) {
+22         Note note = notes.get(position);
+23         holder.titleText.setText(note.getTitle());
+24         holder.dateText.setText(new SimpleDateFormat("dd/MM/yyyy HH:mm")
+25                 .format(note.getDateTime()));
+26         
+27         switch (note.getPriority()) {
+28             case HIGH:
+29                 holder.priorityIcon.setImageResource(R.drawable.ic_priority_high);
+30                 break;
+31             case MEDIUM:
+32                 holder.priorityIcon.setImageResource(R.drawable.ic_priority_medium);
+33                 break;
+34             case LOW:
+35                 holder.priorityIcon.setImageResource(R.drawable.ic_priority_low);
+36                 break;
+37         }
+38 
+39         if (note.getImageUri() != null) {
+40             loadImageFromUri(Uri.parse(note.getImageUri()), holder.noteImage);
+41         }
+42     }
+43 
+44     private int contextMenuPosition;
+45 
+46     public int getContextMenuPosition() {
+47         return contextMenuPosition;
+48     }
+49 
+50     private void loadImageFromUri(Uri uri, ImageView imageView) {
+51         try {
+52             InputStream inputStream = imageView.getContext().getContentResolver().openInputStream(uri);
+53 
+54             BitmapFactory.Options options = new BitmapFactory.Options();
+55             options.inJustDecodeBounds = true;
+56             BitmapFactory.decodeStream(inputStream, null, options);
+57             inputStream.close();
+58 
+59             int targetW = imageView.getWidth();
+60             int targetH = imageView.getHeight();
+61             int scaleFactor = Math.min(options.outWidth / targetW, options.outHeight / targetH);
+62 
+63             options.inJustDecodeBounds = false;
+64             options.inSampleSize = scaleFactor;
+65             inputStream = imageView.getContext().getContentResolver().openInputStream(uri);
+66             Bitmap bitmap = BitmapFactory.decodeStream(inputStream, null, options);
+67             imageView.setImageBitmap(bitmap);
+68             inputStream.close();
+69         } catch (Exception e) {
+70             e.printStackTrace();
+71             imageView.setImageResource(R.drawable.ic_launcher_foreground); 
+72         }
+73     }
+74 
+75     @Override
+76     public int getItemCount() {
+77         return notes != null ? notes.size() : 0;
+78     }
+79 
+80     public void setOnItemLongClickListener(OnItemLongClickListener listener) {
+81         this.longClickListener = listener;
+82     }
+83 
+84     public void updateList(List<Note> newList) {
+85         notes = newList;
+86         notifyDataSetChanged();
+87     }
+88 
+89     class NoteViewHolder extends RecyclerView.ViewHolder {
+90         TextView titleText, dateText;
+91         ImageView priorityIcon, noteImage;
+92 
+93         NoteViewHolder(View itemView) {
+94             super(itemView);
+95             titleText = itemView.findViewById(R.id.note_title);
+96             dateText = itemView.findViewById(R.id.note_date);
+97             priorityIcon = itemView.findViewById(R.id.priority_icon);
+98             noteImage = itemView.findViewById(R.id.note_image);
+99 
+100            itemView.setOnLongClickListener(v -> {
+101                contextMenuPosition = getAdapterPosition();
+102                if (longClickListener != null) {
+103                    return longClickListener.onItemLongClick(v, getAdapterPosition());
+104                }
+105                return false;
+106            });
+107        }
+108    }
+109 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Додаток Д
+
+1.  protected void onCreate(Bundle savedInstanceState) {
+2.      super.onCreate(savedInstanceState);
+3.      setContentView(R.layout.activity_add_edit_note);
+4.      // Ініціалізація views
+5.      titleEdit = findViewById(R.id.edit_title);
+6.      descriptionEdit = findViewById(R.id.edit_description);
+7.      prioritySpinner = findViewById(R.id.priority_spinner);
+8.      selectedImage = findViewById(R.id.selected_image);
+9.      selectImageButton = findViewById(R.id.btn_select_image);
+10.     saveButton = findViewById(R.id.btn_save);
+11.     // Налаштування spinner'а для вибору пріоритету
+12.     setupPrioritySpinner();
+13.     // Перевірка чи редагуємо існуючу нотатку
+14.     checkForEditingNote();
+15.     // Налаштування обробників кнопок listeners
+16.     setupClickListeners();
+17. }
+18. private void setupPrioritySpinner() {
+19.     ArrayAdapter<Priority> priorityAdapter = new ArrayAdapter<>(
+20.             this,
+21.             android.R.layout.simple_spinner_item,
+22.             Priority.values()
+23.     );
+24.   priorityAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+25.     prioritySpinner.setAdapter(priorityAdapter);
+26. }
+27. private void checkForEditingNote() {
+28.     Intent intent = getIntent();
+29.     if (intent.hasExtra("note")) {
+30.         editingNote = (Note) intent.getSerializableExtra("note");
+31.         editingPosition = intent.getIntExtra("position", -1);
+32.         fillFieldsWithNote(editingNote);
+33.     }
+34. }
+35. private void setupClickListeners() {
+36.     selectImageButton.setOnClickListener(v -> selectImage());
+37.     saveButton.setOnClickListener(v -> saveNote());
+38. }
+39. private void fillFieldsWithNote(Note note) {
+40.     titleEdit.setText(note.getTitle());
+41.     descriptionEdit.setText(note.getDescription());
+42.     prioritySpinner.setSelection(note.getPriority().ordinal());
+43.     if (note.getImageUri() != null) {
+44.         selectedImageUri = Uri.parse(note.getImageUri());
+45.         loadImage(selectedImageUri);
+46.     }
+47. }
+48. private void selectImage() {
+49.     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+50.     intent.setType("image/*"); // Обираємо всі типи зображень
+51.     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+52.     startActivityForResult(intent, PICK_IMAGE_REQUEST);
+53. }
+54. @Override
+55. protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+56.     super.onActivityResult(requestCode, resultCode, data);
+57.     if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
+58.         Uri selectedImageUri = data.getData();
+59.         loadImage(selectedImageUri);
+60.     }
+61. }
+62. private void loadImage(Uri uri) {
+63.     try {
+64.         InputStream inputStream = getContentResolver().openInputStream(uri);
+65.         if (inputStream != null) {
+66.             BitmapFactory.Options options = new BitmapFactory.Options();
+67.             options.inJustDecodeBounds = true;
+68.             BitmapFactory.decodeStream(inputStream, null, options);
+69.             inputStream.close();
+70.             int maxDimension = 1024;
+71.             int scaleFactor = Math.min(options.outWidth / maxDimension, options.outHeight / maxDimension);
+72.             options.inJustDecodeBounds = false;
+73.             options.inSampleSize = scaleFactor;
+74.             inputStream = getContentResolver().openInputStream(uri);
+75.             Bitmap bitmap = BitmapFactory.decodeStream(inputStream, null, options);
+76.             selectedImage.setImageBitmap(bitmap);
+77.             inputStream.close();
+78.         }
+79.     } catch (Exception e) {
+80.         e.printStackTrace();
+81.         Toast.makeText(this, "Error loading image", Toast.LENGTH_SHORT).show();
+82.     }
+83. }
+84. private void saveNote() {
+85.     String title = titleEdit.getText().toString().trim();
+86.     String description = descriptionEdit.getText().toString().trim();
+87.     Priority priority = (Priority) prioritySpinner.getSelectedItem();
+88.     if (title.isEmpty()) {
+89.         titleEdit.setError("Title is required");
+90.         return;
+91.     }
+92.     Note note = new Note(
+93.             title,
+94.             description,
+95.             priority,
+96.             new Date(),
+97.             selectedImageUri != null ? selectedImageUri.toString() : null
+98.     );
+99.     Intent resultIntent = new Intent();
+100.     resultIntent.putExtra("note", note);
+101.     if (editingPosition != -1) {
+102.         resultIntent.putExtra("position", editingPosition);
+103.     }
+104.     setResult(RESULT_OK, resultIntent);
+105.     finish();
+106. }
+Додаток Ж
+
+1  public class MainActivity extends AppCompatActivity {
+2      private List<Note> notesList;
+3      private NotesAdapter adapter;
+4      private RecyclerView recyclerView;
+5      @Override
+6      protected void onCreate(Bundle savedInstanceState) {
+7          super.onCreate(savedInstanceState);
+8          setContentView(R.layout.activity_main);
+9          notesList = new ArrayList<>();
+10         recyclerView = findViewById(R.id.recyclerView);
+11         recyclerView.setLayoutManager(new LinearLayoutManager(this));
+12         adapter = new NotesAdapter(notesList);
+13         recyclerView.setAdapter(adapter);
+14         adapter.setOnItemLongClickListener((view, position) -> {
+15             registerForContextMenu(view);
+16             view.showContextMenu();
+17             return true;
+18         });
+19     }
+20     @Override
+21     public boolean onCreateOptionsMenu(Menu menu) {
+22         getMenuInflater().inflate(R.menu.main_menu, menu);
+23         MenuItem searchItem = menu.findItem(R.id.action_search);
+24         SearchView searchView = (SearchView) searchItem.getActionView();
+25         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+26             @Override
+27             public boolean onQueryTextSubmit(String query) {
+28                 filterNotes(query);
+29                 return true;
+30             }
+31             @Override
+32             public boolean onQueryTextChange(String newText) {
+33                 filterNotes(newText);
+34                 return true;
+35             }
+36         });
+37         return true;
+38     }
+39     private void filterNotes(String query) {
+40         List<Note> filteredList = new ArrayList<>();
+41         for (Note note : notesList) {
+42             if (note.getTitle().toLowerCase().contains(query.toLowerCase()) ||
+43                     note.getDescription().toLowerCase().contains(query.toLowerCase())) {
+44                 filteredList.add(note);
+45             }
+46         }
+47         adapter.updateList(filteredList);
+48     }
+49     public void filterByPriority(Priority priority) {
+50         if (priority == null) {
+51             adapter.updateList(notesList);
+52             return;
+53         }
+54         List<Note> filteredList = new ArrayList<>();
+55         for (Note note : notesList) {
+56             if (note.getPriority() == priority) {
+57                 filteredList.add(note);
+58             }
+59         }
+60         adapter.updateList(filteredList);
+61     }
+62     @Override
+63     public boolean onOptionsItemSelected(MenuItem item) {
+64         int itemId = item.getItemId();
+65         if (itemId == R.id.filter_all) {
+66             adapter.updateList(notesList);
+67             return true;
+68         }
+69         else if (itemId == R.id.filter_high) {
+70             filterByPriority(Priority.HIGH);
+71             return true;
+72         }
+73         else if (itemId == R.id.filter_medium) {
+74             filterByPriority(Priority.MEDIUM);
+75             return true;
+76         }
+77         else if (itemId == R.id.filter_low) {
+78             filterByPriority(Priority.LOW);
+79             return true;
+80         }
+81         else if (itemId == R.id.action_add) {
+82             startActivityForResult(new Intent(this, AddEditNoteActivity.class), 1);
+83             return true;
+84         }
+85         return super.onOptionsItemSelected(item);
+86     }
+87     @Override
+88     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+89         super.onActivityResult(requestCode, resultCode, data);
+90         if (resultCode == RESULT_OK && data != null) {
+91             Note note = (Note) data.getSerializableExtra("note");
+92             if (requestCode == 1) { // Add
+93                 notesList.add(note);
+94             } else if (requestCode == 2) { // Edit
+95                 int position = data.getIntExtra("position", -1);
+96                 if (position != -1) {
+97                     notesList.set(position, note);
+98                 }
+99             }
+100            adapter.notifyDataSetChanged();
+101        }
+102    }
+103    @Override
+104    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+105        super.onCreateContextMenu(menu, v, menuInfo);
+106        MenuInflater inflater = getMenuInflater();
+107        inflater.inflate(R.menu.context_menu, menu);
+108    }
+109    @Override
+110    public boolean onContextItemSelected(MenuItem item) {
+111        RecyclerView.ViewHolder viewHolder = recyclerView.findViewHolderForAdapterPosition(adapter.getContextMenuPosition());
+112        if (viewHolder == null) {
+113            return super.onContextItemSelected(item);
+114        }
+115        int position = viewHolder.getAdapterPosition();
+116        if (item.getItemId() == R.id.action_edit) {
+117            Intent intent = new Intent(this, AddEditNoteActivity.class);
+118            intent.putExtra("note", notesList.get(position));
+119            intent.putExtra("position", position);
+120            startActivityForResult(intent, 2);
+121            return true;
+122        } else if (item.getItemId() == R.id.action_delete) {
+123            notesList.remove(position);
+124            adapter.notifyItemRemoved(position);
+125            return true;
+126        }
+127        return super.onContextItemSelected(item);
+128    }
+129 }
+
+
