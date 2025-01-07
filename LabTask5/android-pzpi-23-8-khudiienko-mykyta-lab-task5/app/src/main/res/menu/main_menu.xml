@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <!-- Пошук -->
+    <item
+        android:id="@+id/action_search"
+        android:title="Search"
+        app:actionViewClass="android.widget.SearchView"
+        app:showAsAction="always|collapseActionView" />
+
+    <!-- Додати нотатку -->
+    <item
+        android:id="@+id/action_add"
+        android:title="Add Note"
+        app:showAsAction="always" />
+
+    <!-- Фільтрація за важливістю -->
+    <item
+        android:id="@+id/action_filter"
+        android:title="Filter"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/filter_all"
+                android:title="All" />
+            <item
+                android:id="@+id/filter_high"
+                android:title="High Priority" />
+            <item
+                android:id="@+id/filter_medium"
+                android:title="Medium Priority" />
+            <item
+                android:id="@+id/filter_low"
+                android:title="Low Priority" />
+        </menu>
+    </item>
+
+    <!-- Налаштування -->
+    <item
+        android:id="@+id/action_settings"
+        android:title="Settings"
+        app:showAsAction="never" />
+</menu>

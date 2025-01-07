@@ -1,0 +1,369 @@
+Харківський університет радіоелектроніки
+Факультет комп'ютерних наук
+Кафедра програмної інженерії
+
+
+
+
+
+
+
+ЗВІТ
+з лабораторної роботи № 5
+з дисципліни
+"Програмування під Android"
+
+
+
+
+
+
+
+
+
+Виконав ст. гр ПЗПІ-23-8
+Худієнко Микита Віталійович
+
+
+Перевірив 
+ст. викладач кафедри ПІ
+Сокорчук Ігор Петрович
+
+
+
+
+
+
+
+Харків 2024
+Завдання
+Доповнити завдання №4 наступними функціями:
+реалізувати різне відображення для портретної та ланшафтної орієнтації екрану;
+створити дві редаговані теми (тло, гарнітура шрифту, колір тексту тощо) і застосовувати їх в залежності від налаштувань програми.
+додати можливість задавати в налаштуваннях програми розмір шрифту.
+Переробити завдання №4 так, щоб дані нотаток зберігалися у базі даних SQLite
+Хід роботи
+	Змінемо клас Note. Додамо поле id(Поле id використовується для ідентифікації запису в базі даних. Нові записи мають id = -1) та спрощений конструктор, який використовується для створення нової нотатки без ідентифікатора (перед додаванням у базу даних):
+
+1 private int id;
+2 public Note(String title, String description, Priority priority, Date dateTime, String imageUri) {
+3    this(-1, title, description, priority, dateTime, imageUri);
+4 }
+	Створемо клас NotesDatabaseHelper, що відповідає за управління базою даних SQLite, яка зберігає нотатки. Він забезпечує створення, оновлення та маніпуляцію даними. Метод onUpgrade використовується для оновлення бази даних, якщо змінюється її версія, видаляє стару таблицю та створює нову. Метод addNote додає нову нотатку в базу даних, використовує об'єкт ContentValues для формування даних. Метод updateNote оновлює існуючу нотатку за її id, повертає кількість оновлених рядків. Метод deleteNote видаляє нотатку з бази даних за її id. Метод getAllNotes отримує всі нотатки з бази даних, сортує їх за датою (в порядку спадання), кожен запис перетворюється у об'єкт Note і додається до списку, повертає список нотаток(див. Додаток Б).
+	Для зміни теми та розміру шрифта створюємо нову Activity SettingsActivity. Заповнюємо файл розмітки activity_settings.xml:
+
+
+1<LinearLayout
+2   xmlns:android="http://schemas.android.com/apk/res/android"
+3   android:layout_width="match_parent"
+4   android:layout_height="match_parent"
+5   android:orientation="vertical"
+6   android:padding="16dp">
+7   <RadioGroup
+8       android:id="@+id/theme_group"
+9       android:layout_width="match_parent"
+10       android:layout_height="wrap_content">
+11       <RadioButton
+12           android:id="@+id/radio_light"
+13           android:layout_width="wrap_content"
+14           android:layout_height="wrap_content"
+15           android:text="Light Theme" />
+16
+17       <RadioButton
+18           android:id="@+id/radio_dark"
+19           android:layout_width="wrap_content"
+20           android:layout_height="wrap_content"
+21           android:text="Dark Theme" />
+22   </RadioGroup>
+23   <TextView
+24       android:layout_width="wrap_content"
+25       android:layout_height="wrap_content"
+26       android:layout_marginTop="16dp"
+27       android:text="Font Size" />
+28   <SeekBar
+29       android:id="@+id/font_size_seekbar"
+30       android:layout_width="match_parent"
+31       android:layout_height="wrap_content"
+32       android:max="8" />
+33   <Button
+34       android:id="@+id/btn_save_settings"
+35       android:layout_width="wrap_content"
+36       android:layout_height="wrap_content"
+37       android:layout_marginTop="16dp"
+38       android:text="Save" />
+39 </LinearLayout>
+
+	Клас SettingsActivity — це Activity для налаштувань у додатку, де користувач може змінювати тему та розмір шрифту. В ньому оголошуються змінні. Метод onCreate - ініціалізація елементів, завантаження збережених налаштувань, додавання обробника подій для кнопки збереження(savePreferences: зберігає вибрані налаштування у SharedPreferences. Створення Intent: після натискання кнопки користувача перенаправляють назад до MainActivity. finish(): закриває SettingsActivity). Метод loadPreferences завантажує налаштування та встановлює значення теми та розміру шрифта. Метод savePreferences отримує ID вибраної теми через themeGroup.getCheckedRadioButtonId(), розмір шрифту додається до мінімального значення (12), зберігає налаштування:
+
+1. public class SettingsActivity extends AppCompatActivity {
+2.     private RadioGroup themeGroup;
+3.     private SeekBar fontSizeSeekBar;
+4.     private Button saveButton;
+5.     @Override
+6.     protected void onCreate(Bundle savedInstanceState) {
+7.         super.onCreate(savedInstanceState);
+8.         setContentView(R.layout.activity_settings);
+9.         themeGroup = findViewById(R.id.theme_group);
+10.        fontSizeSeekBar = findViewById(R.id.font_size_seekbar);
+11.        saveButton = findViewById(R.id.btn_save_settings);
+12.        loadPreferences();
+13.        saveButton.setOnClickListener(v -> {
+14.            savePreferences();
+15.            Intent intent = new Intent(this, MainActivity.class);
+16.            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+17.            startActivity(intent);
+18.            finish(); 
+19.        });
+20.    }
+21.    private void loadPreferences() {
+22.        SharedPreferences prefs = getSharedPreferences("Settings", MODE_PRIVATE);
+23.        int selectedTheme = prefs.getInt("theme", R.id.radio_light);
+24.        int fontSize = prefs.getInt("fontSize", 16);
+25.        themeGroup.check(selectedTheme);
+26.        fontSizeSeekBar.setProgress(fontSize - 12); 
+27.    }
+28.    private void savePreferences() {
+29.        SharedPreferences.Editor editor = getSharedPreferences("Settings", MODE_PRIVATE).edit();
+30.        editor.putInt("theme", themeGroup.getCheckedRadioButtonId());
+31.        editor.putInt("fontSize", fontSizeSeekBar.getProgress() + 12); 
+32.        editor.apply();
+33.    }
+34. }
+
+	Змінемо клас MainActivity. Оголосимо поля dbHelper: Екземпляр NotesDatabaseHelper, який використовується для взаємодії з базою даних SQLite для зберігання та отримання нотаток. notesList: Список об'єктів Note, що представляє всі нотатки з бази даних. filteredList: Список, що містить нотатки, які відповідають певним критеріям фільтрації (наприклад, пошук або пріоритет). onResume() Цей метод життєвого циклу викликається при поновленні активності: applyPreferences(): Цей метод викликається для завантаження налаштувань користувача (наприклад, розміру шрифту) і застосування їх до адаптера списку. applyTheme() Цей метод перевіряє збережену тему (світлу чи темну) і застосовує відповідну тему (R.style.Theme_LabTask5_Light або R.style.Theme_LabTask5_Dark). onActivityResult Обробляє результат, коли додається нова нотатка або редагується існуюча: якщо результат RESULT_OK, оновлює список нотаток як в основному списку (notesList), так і у відфільтрованому списку (filteredList), після чого оновлює адаптер:
+
+1.  private NotesDatabaseHelper dbHelper;
+2.  private List<Note> notesList;
+3.  private List<Note> filteredList;
+4.  private void applyPreferences() {
+5.      SharedPreferences prefs = getSharedPreferences("Settings", MODE_PRIVATE);
+6.      int fontSize = prefs.getInt("fontSize", 16); // Отримуємо розмір шрифту
+7.      adapter.setFontSize(fontSize); // Застосовуємо до адаптера
+8.  }
+9.  private void applyTheme() {
+10.     SharedPreferences prefs = getSharedPreferences("Settings", MODE_PRIVATE);
+11.     int themeId = prefs.getInt("theme", R.id.radio_light);
+12.     if (themeId == R.id.radio_dark) {
+13.         setTheme(R.style.Theme_LabTask5_Dark);
+14.     } else {
+15.         setTheme(R.style.Theme_LabTask5_Light);
+16.     }
+17. }
+18. @Override
+19. protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+20.     super.onActivityResult(requestCode, resultCode, data);
+21.     if (resultCode == RESULT_OK && data != null) {
+22.         Note note = (Note) data.getSerializableExtra("note");
+23.         if (requestCode == 1) { // Add
+24.             dbHelper.addNote(note);
+25.         } else if (requestCode == 2) { // Edit
+26.             dbHelper.updateNote(note);
+27.         }
+28.         notesList = dbHelper.getAllNotes();
+29.         filteredList = new ArrayList<>(notesList); 
+30.         adapter.updateList(filteredList);
+31.     }
+32. }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ВИСНОВКИ
+
+
+В ході виконання лабораторної роботи було доповнено завдання №4 наступними функціями:
+реалізовано різне відображення для портретної та ланшафтної орієнтації екрану;
+створено дві редаговані теми (тло, гарнітура шрифту, колір тексту тощо) і застосовувати їх в залежності від налаштувань програми.
+додано можливість задавати в налаштуваннях програми розмір шрифту.
+Перероблено завдання №4 так, щоб дані нотаток зберігалися у базі даних SQLite
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ВИКОРИСТАНІ ДЖЕРЕЛА
+
+
+1 Обробка подій (на прикладі обробки натискання кнопок). DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=599276 (дата звернення: 30.12.2024)
+2 Розмітка екрана. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=583063 (дата звернення: 30.12.2024)
+3 Робота з SQLite, класи та методи для роботи. DL.NURE.UA. URL: https://dl.nure.ua/mod/page/view.php?id=606534(дата звернення: 30.12.2024)
+4 Посилання на відеозвіт у YouTube. URL: https://youtu.be/he4DvwiR8AE
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК А
+
+
+Програмний код опубліковано на GitHub. URL: https://github.com/NureKhudiienkoMykyta/android-pzpi-23-8-khudiienko-mykyta
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ДОДАТОК Б
+
+01  public class NotesDatabaseHelper extends SQLiteOpenHelper {
+02      private static final String DATABASE_NAME = "notes2.db";
+03      private static final int DATABASE_VERSION = 1;
+04  
+05      private static final String TABLE_NOTES = "notes2";
+06      private static final String COLUMN_ID = "id";
+07      private static final String COLUMN_TITLE = "title";
+08      private static final String COLUMN_DESCRIPTION = "description";
+09      private static final String COLUMN_PRIORITY = "priority";
+10      private static final String COLUMN_DATE = "date";
+11      private static final String COLUMN_IMAGE_URI = "image_uri";
+12  
+13      public NotesDatabaseHelper(Context context) {
+14          super(context, DATABASE_NAME, null, DATABASE_VERSION);
+15      }
+16  
+17      @Override
+18      public void onCreate(SQLiteDatabase db) {
+19          String createTable = "CREATE TABLE " + TABLE_NOTES + "(" +
+20                  COLUMN_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+21                  COLUMN_TITLE + " TEXT, " +
+22                  COLUMN_DESCRIPTION + " TEXT, " +
+23                  COLUMN_PRIORITY + " TEXT, " +
+24                  COLUMN_DATE + " INTEGER, " +
+25                  COLUMN_IMAGE_URI + " TEXT)";
+26          db.execSQL(createTable);
+27      }
+28  
+29      @Override
+30      public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+31          db.execSQL("DROP TABLE IF EXISTS " + TABLE_NOTES);
+32          onCreate(db);
+33      }
+34  
+35      public long addNote(Note note) {
+36          SQLiteDatabase db = this.getWritableDatabase();
+37          ContentValues values = new ContentValues();
+38          values.put(COLUMN_TITLE, note.getTitle());
+39          values.put(COLUMN_DESCRIPTION, note.getDescription());
+40          values.put(COLUMN_PRIORITY, note.getPriority().toString());
+41          values.put(COLUMN_DATE, note.getDateTime().getTime());
+42          values.put(COLUMN_IMAGE_URI, note.getImageUri());
+43  
+44          return db.insert(TABLE_NOTES, null, values);
+45      }
+46  
+47      public int updateNote(Note note) {
+48          SQLiteDatabase db = this.getWritableDatabase();
+49          ContentValues values = new ContentValues();
+50          values.put(COLUMN_TITLE, note.getTitle());
+51          values.put(COLUMN_DESCRIPTION, note.getDescription());
+52          values.put(COLUMN_PRIORITY, note.getPriority().toString());
+53          values.put(COLUMN_DATE, note.getDateTime().getTime());
+54          values.put(COLUMN_IMAGE_URI, note.getImageUri());
+55  
+56          return db.update(TABLE_NOTES, values, COLUMN_ID + "=?", new String[]{String.valueOf(note.getId())});
+57      }
+58  
+59      public void deleteNote(int id) {
+60          SQLiteDatabase db = this.getWritableDatabase();
+61          db.delete(TABLE_NOTES, COLUMN_ID + "=?", new String[]{String.valueOf(id)});
+62      }
+63  
+64      public List<Note> getAllNotes() {
+65          List<Note> notes = new ArrayList<>();
+66          SQLiteDatabase db = this.getReadableDatabase();
+67          Cursor cursor = db.query(TABLE_NOTES, null, null, null, null, null, COLUMN_DATE + " DESC");
+68  
+69          if (cursor.moveToFirst()) {
+70              do {
+71                  Note note = new Note(
+72                          cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID)),
+73                          cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TITLE)),
+74                          cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DESCRIPTION)),
+75                          Priority.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRIORITY))),
+76                          new Date(cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_DATE))),
+77                          cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IMAGE_URI))
+78                  );
+79                  notes.add(note);
+80              } while (cursor.moveToNext());
+81          }
+82  
+83          cursor.close();
+84          return notes;
+85      }
+86  }
